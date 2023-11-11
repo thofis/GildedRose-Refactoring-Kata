@@ -16,7 +16,7 @@ class GildedRoseTest {
         Item[] items = {new Item("foo", 0, 0)};
         GildedRose app = new GildedRose(items);
         app.updateQuality();
-        assertEquals("foo", app.items[0].name);
+        assertEquals("foo", app.getItemname(0));
     }
 
 //    -------- day 1 --------
@@ -81,7 +81,7 @@ class GildedRoseTest {
 
     @Test
     void sulfuras_quality_never_changes() {
-        int initialQuality = 50;
+        int initialQuality = 80;
         TestSetup setup = getTestSetup(new Item(GildedRose.SULFURAS_HAND_OF_RAGNAROS, 0, initialQuality));
 
         for (int i = 0; i < 10; i++) {
@@ -125,10 +125,9 @@ class GildedRoseTest {
     }
 
     @Test
-    @Disabled("erst am Ende aktivieren, wenn Tests für andere Requirements umgesetzt und Refactoring vollzogen")
     void conjured_items_degrade_twice_as_fast() {
         int initialQuality = 20;
-        TestSetup setup = getTestSetup(new Item("Conjured Mana Cake", 3, initialQuality));
+        TestSetup setup = getTestSetup(new Item(GildedRose.CONJURED_MANA_CAKE, 3, initialQuality));
 
         setup.app.updateQuality();
         assertThat(setup.item.quality).isEqualTo(initialQuality - 2);
