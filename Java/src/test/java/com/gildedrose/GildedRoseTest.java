@@ -9,9 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GildedRoseTest {
 
+    public static final String STANDARD_ITEM = "standard item";
+
     @Test
     void foo() {
-        Item[] items = new Item[]{new Item("foo", 0, 0)};
+        Item[] items = {new Item("foo", 0, 0)};
         GildedRose app = new GildedRose(items);
         app.updateQuality();
         assertEquals("foo", app.items[0].name);
@@ -30,9 +32,36 @@ class GildedRoseTest {
 //    Conjured Mana Cake, 2, 5
 
     @Test
+    void an_items_quality_is_never_negative() {
+        TestSetup setup = getTestSetup(new Item(STANDARD_ITEM, 2, 5));
+        for (int i = 0; i < 10; i++) {
+            setup.app.updateQuality();
+            assertThat(setup.item.quality).isGreaterThanOrEqualTo(0);
+        }
+    }
+
+    @Test
+    void an_items_quality_is_never_more_that_50() {
+        TestSetup setup = getTestSetup(new Item(STANDARD_ITEM, 2, 100));
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isLessThanOrEqualTo(50);
+    }
+
+    @Test
+    void an_items_quality_decreases_twice_as_fast_when_sellin_is_reached() {
+        int initialQuality = 5;
+        TestSetup setup = getTestSetup(new Item(STANDARD_ITEM, 0, initialQuality));
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isEqualTo(initialQuality - 2);
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isEqualTo(initialQuality - 4);
+
+    }
+
+    @Test
     void agedBrie_quality_always_increases() {
         int initialQuality = 0;
-        TestSetup setup = getTestSetup(new Item("Aged Brie", 2, initialQuality));
+        TestSetup setup = getTestSetup(new Item(GildedRose.AGED_BRIE, 2, initialQuality));
         assumeThat(setup.item().quality).isEqualTo(initialQuality);
 
         setup.app().updateQuality();
@@ -52,13 +81,47 @@ class GildedRoseTest {
 
     @Test
     void sulfuras_quality_never_changes() {
-        int initialQuality = 80;
-        TestSetup setup = getTestSetup(new Item("Sulfuras, Hand of Ragnaros", 0, initialQuality));
+        int initialQuality = 50;
+        TestSetup setup = getTestSetup(new Item(GildedRose.SULFURAS_HAND_OF_RAGNAROS, 0, initialQuality));
 
         for (int i = 0; i < 10; i++) {
             setup.app().updateQuality();
             assertThat(setup.item().quality).isEqualTo(initialQuality);
         }
+    }
+
+
+    //        "Backstage-Pässe" (backstage passes) werden - wie Aged Brie - hochwertiger,
+//        solange das "Verkaufsdatum" noch nicht erreicht wurde.
+//        Bei 10 Tagen oder weniger erhöht sich die Qualität um 2,
+//        bei 5 Tagen oder weniger um 3, nach dem "Konzert" sinkt sie aber auf 0.
+    @Test
+    void quality_increases_for_backstage_passes_by_2_10_days_before_concert() {
+        int initialQuality = 1;
+        TestSetup setup = getTestSetup(new Item(GildedRose.BACKSTAGE_PASSES_TO_A_TAFKAL_80_ETC_CONCERT, 10, initialQuality));
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isEqualTo(initialQuality + 2);
+    }
+    @Test
+    void quality_increases_for_backstage_passes_by_3_5_days_before_concert() {
+        int initialQuality = 1;
+        TestSetup setup = getTestSetup(new Item(GildedRose.BACKSTAGE_PASSES_TO_A_TAFKAL_80_ETC_CONCERT, 5, initialQuality));
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isEqualTo(initialQuality + 3);
+    }
+    @Test
+    void quality_increases_for_backstage_passes_by_1_long_before_concert() {
+        int initialQuality = 1;
+        TestSetup setup = getTestSetup(new Item(GildedRose.BACKSTAGE_PASSES_TO_A_TAFKAL_80_ETC_CONCERT, 50, initialQuality));
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isEqualTo(initialQuality + 1);
+    }
+    @Test
+    void quality_drops_to_0_for_backstage_passes_after_concert() {
+        int initialQuality = 50;
+        TestSetup setup = getTestSetup(new Item(GildedRose.BACKSTAGE_PASSES_TO_A_TAFKAL_80_ETC_CONCERT, 0, initialQuality));
+        setup.app.updateQuality();
+        assertThat(setup.item.quality).isEqualTo(0);
     }
 
     @Test
